@@ -58,8 +58,7 @@ A pre-existing USB timeout can still delay teardown.
 
 ## Install and test
 
-1. Download the tested package from [GitHub Releases](https://github.com/KaHadzhiev/fanatec-fullforce-steamos/releases/tag/v0.3.0), or clone this repository. In Desktop Mode, extract the ZIP and open Konsole in the extracted
-   `fanatec-fullforce-update` directory. Close EVO and other Proton games.
+1. Download the [0.3 installation ZIP](https://github.com/KaHadzhiev/fanatec-fullforce-steamos/archive/bb626b701ceb58ec81fa6d3a3bd48f829f1b70e7.zip), or clone this repository. In Desktop Mode, extract the ZIP and open Konsole in the folder containing `kernel_update.py`. Close EVO and other Proton games.
    Keep 0.2 undone. Check `uname -r` against the version above. The working
    `hid_fanatec` must already be installed as a disk module for that kernel.
 2. Run this to back up the currently selected module and stage 0.3.
