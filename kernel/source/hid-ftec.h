@@ -1,0 +1,279 @@
+#ifndef __HID_FTEC_H
+#define __HID_FTEC_H
+
+#include <linux/module.h>
+#include <linux/input.h>
+#include <linux/workqueue.h>
+#include "ftec-report-fifo.h"
+#if IS_REACHABLE(CONFIG_LEDS_CLASS)
+#include <linux/leds.h>
+#endif
+
+#define FANATEC_VENDOR_ID 0x0eb7
+
+// wheelbases
+#define CLUBSPORT_V2_WHEELBASE_DEVICE_ID 0x0001
+#define CLUBSPORT_V25_WHEELBASE_DEVICE_ID 0x0004
+#define CLUBSPORT_PEDALS_V3_DEVICE_ID 0x183b
+#define PODIUM_WHEELBASE_DD1_DEVICE_ID 0x0006
+#define PODIUM_WHEELBASE_DD2_DEVICE_ID 0x0007
+#define CSL_ELITE_WHEELBASE_DEVICE_ID 0x0E03
+#define CSL_ELITE_PS4_WHEELBASE_DEVICE_ID 0x0005
+#define CSL_ELITE_PEDALS_DEVICE_ID 0x6204
+#define CSL_LC_PEDALS_DEVICE_ID 0x6205
+#define CSL_LC_V2_PEDALS_DEVICE_ID 0x6206
+#define CSL_DD_WHEELBASE_DEVICE_ID 0x0020
+#define CSR_ELITE_WHEELBASE_DEVICE_ID 0x0011
+#define PORSCHE_911_WHEELBASE_DEVICE_ID 0x0197
+
+// wheels (rim index byte as sent by the wheel-base: byte 30 of the 34-byte
+// wheel input report)
+#define CLUBSPORT_STEERING_WHEEL_BMW_M3_GT2_ID 0x01
+#define CLUBSPORT_STEERING_WHEEL_F1_IS_ID 0x02
+#define CLUBSPORT_STEERING_WHEEL_PORSCHE_918_RSR_ID 0x03
+#define CLUBSPORT_STEERING_WHEEL_UNIVERSAL_HUB_ID 0x04
+#define CLUBSPORT_STEERING_WHEEL_UNIVERSAL_HUB_XBOX_ONE_ID 0x06
+#define CSL_STEERING_WHEEL_P1_XBOX_ONE_ID 0x07
+#define CSL_STEERING_WHEEL_P1_V2_ID 0x08
+#define CSL_ELITE_STEERING_WHEEL_MCLAREN_GT3_V1_ID 0x09
+#define CLUBSPORT_STEERING_WHEEL_FORMULA_V2_ID 0x0a
+#define CSL_ELITE_STEERING_WHEEL_MCLAREN_GT3_V2_ID 0x0b
+/* Podium Hub, may carry a Button Module (BME/BMR) */
+#define PODIUM_BUTTON_MODULE_ENDURANCE_ID 0x0c
+/* duplicates the CSL Elite Steering Wheel WRC mapping (raw id 0x12) */
+#define CSL_ELITE_STEERING_WHEEL_WRC_ALT_ID 0x0d
+#define PODIUM_STEERING_WHEEL_BENTLEY_GT3_ID 0x0e
+#define PODIUM_STEERING_WHEEL_BMW_M4_GT3_ID 0x0f
+/* unnamed in the SDK (driver enum: FW_FILTER_USB_RIMTYPE_DDRGT) */
+#define PODIUM_STEERING_WHEEL_DD_GT_ID 0x10
+#define CSL_STEERING_WHEEL_UNIVERSAL_HUB_ID 0x11
+#define CSL_ELITE_STEERING_WHEEL_WRC_ID 0x12
+#define CLUBSPORT_STEERING_WHEEL_BMW_V2_ID 0x13
+#define CLUBSPORT_STEERING_WHEEL_RS_ID 0x14
+#define CLUBSPORT_STEERING_WHEEL_UNIVERSAL_HUB_V2_ID 0x15
+#define CLUBSPORT_STEERING_WHEEL_F1_ESPORTS_V2_ID 0x16
+/* unnamed in the SDK (driver enum: FW_FILTER_USB_RIMTYPE_DDRGTX) */
+#define PODIUM_STEERING_WHEEL_DD_GT_X_ID 0x18
+
+// Wheel type as reported by the Fanatec SDK/Windows driver (FWFilterUsb.sys).
+// Modern wheelbases report a fixed base-family id; legacy wheelbases report a
+// three-character model code decoded from the input report.
+enum ftec_wheel_type {
+	FTEC_WHEELTYPE_PWC = 1,
+	FTEC_WHEELTYPE_PWGT3RS = 2,
+	FTEC_WHEELTYPE_PWC4 = 3,
+	FTEC_WHEELTYPE_PWTS = 4,
+	FTEC_WHEELTYPE_PWGT2 = 5,
+	FTEC_WHEELTYPE_PWGT3RSV2 = 6,
+	FTEC_WHEELTYPE_CSRE = 7,
+	FTEC_WHEELTYPE_CSR = 8,
+	// base-family ids used by modern wheelbases
+	FTEC_WHEELTYPE_CLUBSPORT_V2 = 10,
+	FTEC_WHEELTYPE_CSL_ELITE = 12,
+	FTEC_WHEELTYPE_CSL_ELITE_PS4 = 13,
+	FTEC_WHEELTYPE_CLUBSPORT_V25 = 14,
+	FTEC_WHEELTYPE_PODIUM_DD1 = 15,
+	FTEC_WHEELTYPE_PODIUM_DD2 = 16,
+	FTEC_WHEELTYPE_CSL_DD = 17,
+	FTEC_WHEELTYPE_UNKNOWN = 0x12,
+};
+
+// quirks
+#define FTEC_FF 0x001
+#define FTEC_PEDALS 0x002
+#define FTEC_WHEELBASE_LEDS 0x004
+#define FTEC_HIGHRES 0x008
+#define FTEC_TUNING_MENU 0x010
+#define FTEC_EVENT_DRIVEN 0x080
+
+// report sizes
+#define FTEC_TUNING_REPORT_SIZE 64
+#define FTEC_WHEEL_REPORT_SIZE 34
+
+// misc
+#define LEDS_WHEELBASE 9
+#define MAX_LEDS 15 // 9 LEDS + 6 FLAGS
+#define FTECFF_MAX_EFFECTS 16
+
+struct ftecff_effect_state {
+	struct ff_effect effect;
+	struct ff_envelope *envelope;
+	unsigned long start_at;
+	unsigned long play_at;
+	unsigned long stop_at;
+	unsigned long flags;
+	unsigned long time_playing;
+	unsigned long updated_at;
+	unsigned int phase;
+	unsigned int phase_adj;
+	unsigned int count;
+	unsigned int cmd;
+	unsigned int cmd_start_time;
+	unsigned int cmd_start_count;
+	int direction_gain;
+	int slope;
+};
+
+struct ftecff_effect_parameters {
+	int level;
+	int d1;
+	int d2;
+	int k1;
+	int k2;
+	unsigned int clip;
+};
+
+struct ftecff_slot {
+	int id;
+	struct ftecff_effect_parameters parameters;
+	u8 current_cmd[7];
+	int is_updated;
+	int effect_type;
+	u8 cmd;
+};
+
+struct ftec_wheel {
+	u8 id;
+	char *name;
+	u8 flags;
+	u8 n_leds;
+};
+
+struct ftec_wheel_classdev {
+	struct device *dev;
+	const struct ftec_wheel *wheel;
+#if IS_REACHABLE(CONFIG_LEDS_CLASS)
+	u16 led_state;
+	struct led_classdev *led[MAX_LEDS];
+#endif
+#if IS_REACHABLE(CONFIG_LEDS_CLASS_MULTICOLOR)
+	u16 led_state_mc[MAX_LEDS];
+	struct led_classdev_mc *led_mc[MAX_LEDS];
+#endif
+};
+
+struct ftec_tuning_classdev {
+	struct device *dev;
+	// the data from the last update we got from the device, shifted by 1
+	u8 ftec_tuning_data[FTEC_TUNING_REPORT_SIZE];
+	u8 advanced_mode;
+};
+
+struct ftec_drv_data_client {
+	struct hid_device *hdev;
+	u8 rdesc[4096];
+	size_t rsize;
+	int opened;
+	struct ff_effect effects[40];
+};
+
+struct ftec_drv_data {
+	unsigned long quirks;
+	spinlock_t report_lock; /* Protect output HID report */
+	spinlock_t timer_lock;
+	struct hrtimer hrtimer;
+	struct hid_device *hid;
+	struct hid_report *report;
+	struct ftec_drv_data_client client;
+	/* ff_lock serializes the queue and shutdown with virtual HID writers. */
+	struct work_struct ff_work;
+	spinlock_t ff_lock;
+	struct ftec_report_fifo ff_fifo;
+	u8 *ff_send;
+	bool ff_stopping;
+	unsigned long ff_accepted;
+	unsigned long ff_overruns;
+	unsigned long ff_errors;
+	struct ftecff_slot slots[5];
+	struct ftecff_effect_state states[FTECFF_MAX_EFFECTS];
+	int effects_used;
+	u16 range;
+	u16 max_range;
+	u16 min_range;
+#if IS_REACHABLE(CONFIG_LEDS_CLASS)
+	u16 led_state;
+	struct led_classdev *led[LEDS_WHEELBASE];
+#endif
+	u8 rim_id;
+	u8 wheel_type;
+	u16 fw_version;
+	u8 fw_version_rim;
+	struct work_struct wheel_work;
+	struct work_struct event_driven_init_work;
+	struct ftec_tuning_classdev tuning;
+	struct ftec_wheel_classdev wheel;
+	u8 last_tuning_event[FTEC_TUNING_REPORT_SIZE];
+	u8 last_wheel_event[FTEC_WHEEL_REPORT_SIZE];
+};
+
+#define FTEC_TUNING_ATTRS                                                  \
+	FTEC_TUNING_ATTR(SLOT, 0x02, "Slot", ftec_conv_minus_one,          \
+			 ftec_conv_plus_one, 1, 5)                         \
+	FTEC_TUNING_ATTR(SEN, 0x03, "Sensivity", ftec_conv_sens_to,        \
+			 ftec_conv_sens_from, 90, 0)                       \
+	FTEC_TUNING_ATTR(FF, 0x04, "Force Feedback Strength",              \
+			 ftec_conv_noop_to, ftec_conv_noop_from, 0, 100)   \
+	FTEC_TUNING_ATTR(SHO, 0x05, "Wheel Vibration Motor",               \
+			 ftec_conv_times_ten, ftec_conv_div_ten, 0, 100)   \
+	FTEC_TUNING_ATTR(BLI, 0x06, "Brake Level Indicator",               \
+			 ftec_conv_noop_to, ftec_conv_noop_from, 0, 101)   \
+	FTEC_TUNING_ATTR(FFS, 0x07, "Force Feedback Scaling",              \
+			 ftec_conv_noop_to, ftec_conv_noop_from, 0, 1)     \
+	FTEC_TUNING_ATTR(DRI, 0x09, "Drift Mode", ftec_conv_signed_to,     \
+			 ftec_conv_noop_from, -5, 3)                       \
+	FTEC_TUNING_ATTR(FOR, 0x0a, "Force Effect Strength",               \
+			 ftec_conv_times_ten, ftec_conv_div_ten, 0, 120)   \
+	FTEC_TUNING_ATTR(SPR, 0x0b, "Spring Effect Strength",              \
+			 ftec_conv_times_ten, ftec_conv_div_ten, 0, 120)   \
+	FTEC_TUNING_ATTR(DPR, 0x0c, "Damper Effect Strength",              \
+			 ftec_conv_times_ten, ftec_conv_div_ten, 0, 120)   \
+	FTEC_TUNING_ATTR(NDP, 0x0d, "Natural Damber", ftec_conv_noop_to,   \
+			 ftec_conv_noop_from, 0, 100)                      \
+	FTEC_TUNING_ATTR(NFR, 0x0e, "Natural Friction", ftec_conv_noop_to, \
+			 ftec_conv_noop_from, 0, 100)                      \
+	FTEC_TUNING_ATTR(brF, 0x10, "Brake Force (load-cell)",             \
+			 ftec_conv_noop_to, ftec_conv_steps_ten, 0, 100)   \
+	FTEC_TUNING_ATTR(FEI, 0x11, "Force Effect Intensity",              \
+			 ftec_conv_noop_to, ftec_conv_steps_ten, 0, 100)   \
+	FTEC_TUNING_ATTR(ACP, 0x13, "Analogue Paddles", ftec_conv_noop_to, \
+			 ftec_conv_noop_from, 1, 4)                        \
+	FTEC_TUNING_ATTR(INT, 0x14, "FFB Interpolation Filter",            \
+			 ftec_conv_noop_to, ftec_conv_noop_from, 0, 20)    \
+	FTEC_TUNING_ATTR(NIN, 0x15, "Natural Inertia", ftec_conv_noop_to,  \
+			 ftec_conv_noop_from, 0, 100)                      \
+	FTEC_TUNING_ATTR(FUL, 0x16, "FullForce", ftec_conv_noop_to,        \
+			 ftec_conv_noop_from, 0, 100)
+
+enum ftec_tuning_attrs_enum {
+#define FTEC_TUNING_ATTR(id, addr, desc, conv_to, conv_from, min, max) id,
+	FTEC_TUNING_ATTRS FTEC_TUNING_ATTR_NONE
+#undef FTEC_TUNING_ATTR
+};
+
+int ftecff_init(struct hid_device *);
+void ftecff_remove(struct hid_device *);
+int ftecff_raw_event(struct hid_device *, struct hid_report *, u8 *, int);
+void send_report_request_to_device(struct ftec_drv_data *);
+
+extern struct class *ftec_tuning_class;
+extern struct class *ftec_wheel_class;
+
+int ftec_tuning_classdev_register(struct device *,
+				  struct ftec_tuning_classdev *);
+void ftec_tuning_classdev_unregister(struct ftec_tuning_classdev *);
+int ftec_tuning_init(struct hid_device *);
+int ftec_tuning_request_data(struct hid_device *);
+int ftec_tuning_request_info(struct hid_device *);
+int ftec_tuning_request(struct hid_device *);
+ssize_t _ftec_tuning_show(struct device *, enum ftec_tuning_attrs_enum, char *);
+ssize_t _ftec_tuning_store(struct device *, enum ftec_tuning_attrs_enum,
+			   const char *, size_t);
+int ftec_wheel_classdev_register(struct device *, struct ftec_wheel_classdev *,
+				 u8);
+void ftec_wheel_classdev_unregister(struct ftec_wheel_classdev *);
+#if IS_REACHABLE(CONFIG_LEDS_CLASS)
+int _ftec_led_update_state(struct led_classdev *, enum led_brightness,
+			   struct led_classdev *[], int, u16);
+#endif
+
+#endif

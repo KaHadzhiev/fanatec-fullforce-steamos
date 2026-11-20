@@ -1,0 +1,16 @@
+{
+  "vendor/fwfilterusb/COPYING": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6",
+  "vendor/fwfilterusb/README.md": "370f4fafb930307e66982bb730a7b0c071019bc9df606a62562c3f62c6c85084",
+  "vendor/fwfilterusb/ftec_fwfilter.reg": "b7d09289e8c887d32d94ca9e008f86d33b038f617a50b9b748bd4d243ed3a105",
+  "vendor/fwfilterusb/fwfilterusb-x64.sys": "1105b6a1522170844a8d7d8b168d31375d3670254ecd85e2b3c12f9ac3822d37",
+  "vendor/fwfilterusb/fwfilterusb.sys": "b268871cff47417d80e2bff9d53e27bdfe4d27e050af3adc330d41ff8d9239d5",
+  "vendor/fwfilterusb/setup_ftec_fwfilter.sh": "093ee7641917b2df9fe022a2c03473c1d449bfb0e3ebd4800218a169dca708ee",
+  "vendor/fwfilterusb/source/COPYING": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6",
+  "vendor/fwfilterusb/source/Makefile": "9863051a277c419083aa04d11d7e705aa238b4f31c4a5cd254c701f25cfa068d",
+  "vendor/fwfilterusb/source/README.md": "370f4fafb930307e66982bb730a7b0c071019bc9df606a62562c3f62c6c85084",
+  "vendor/fwfilterusb/source/ftec_fwfilter.reg": "b7d09289e8c887d32d94ca9e008f86d33b038f617a50b9b748bd4d243ed3a105",
+  "vendor/fwfilterusb/source/fwfilterusb.c": "432761248983ee6d4b0f3e1ec2abc23702c099d78b5863b37ac2151e9f65d4cc",
+  "vendor/fwfilterusb/source/setup_ftec_fwfilter.sh": "093ee7641917b2df9fe022a2c03473c1d449bfb0e3ebd4800218a169dca708ee",
+  "vendor/fwfilterusb/source/test/load_driver.c": "b092dd1e0cb3d3107171ff0ac3aa8bdf802694bfce44c2405c2fd634997f1e50",
+  "vendor/fwfilterusb/source/test/test_fwfilterusb.c": "865bec259cb701a788504032b0f6525a15f57fef058f486d3290e472d4b45e7b"
+}
