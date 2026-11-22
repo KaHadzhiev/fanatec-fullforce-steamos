@@ -4,7 +4,9 @@ For Assetto Corsa EVO (Steam app 3058630), a Fanatec GT DD Pro in PC mode
 (USB `0eb7:0020`), and SteamOS 3.9.5 with kernel
 `7.2.7-valve2-2-neptune-72-g31504582a073`. Version 0.3 was tested on the setup below. The package is free and open source.
 
-## Hardware test reported on 20 November 2026
+## Hardware testing
+
+### Assetto Corsa EVO — 20 November 2026
 
 | Item | Tested setup |
 | --- | --- |
@@ -23,7 +25,15 @@ the add-on, the tester reported that FullForce worked perfectly. This is
 a qualitative result from one configuration. Exact FPS, frame times,
 car, track, firmware, SteamOS host model and Proton version were not
 recorded. Post-install reboot persistence, disconnect/reconnect under load,
-other wheels, kernels and games have no recorded hardware result here.
+and other wheel or kernel combinations have no recorded result for EVO.
+
+### Assetto Corsa Competizione (ACC)
+
+The tester also confirmed that the SteamOS `hid_fanatec` driver worked
+with the Fanatec Gran Turismo DD Pro in Assetto Corsa Competizione.
+This result covers wheel-driver compatibility. FullForce was confirmed
+in the EVO test above. The `update.sh` Proton-prefix commands below
+apply to EVO (Steam app `3058630`).
 
 ## What changed
 
@@ -151,4 +161,4 @@ bash tests/test_report_queue.sh
 The tests cover simulated Proton-prefix install and rollback, filesystem
 module replacement and recovery, and the report queue's ordering, payload
 copy, saturation, USB error count and shutdown gating. The queue test
-uses a simulated workqueue and USB transport. The hardware result above covers one reported configuration. See [BUILD.md](BUILD.md) for build details and [THIRD_PARTY.md](THIRD_PARTY.md) for licenses and credits.
+uses a simulated workqueue and USB transport. The hardware results above reflect the tester's SteamOS setup. See [BUILD.md](BUILD.md) for build details and [THIRD_PARTY.md](THIRD_PARTY.md) for licenses and credits.
